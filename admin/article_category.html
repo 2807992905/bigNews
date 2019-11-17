@@ -81,6 +81,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 </body>
 <!--文章类别模板-->
@@ -130,13 +131,15 @@
             if (e.relatedTarget === $('#xinzengfenlei')[0]) {
                 //alert('新增分类');
                 $('#exampleModalLabel').text('新增类别');
-                $('#myModal btn-queren').text('新增').addClass('btn-primary').removeClass('btn-success');
+                $('#myModal .btn-queren').text('新增').addClass('btn-primary').removeClass('btn-success');
+
                 //reset() 方法可把表单中的元素重置为它们的默认值
                 $('#myModal form')[0].reset();
             } else {
                 //alert('编辑分类');
                 $('#exampleModalLabel').text('编辑类别');
-                $('#myModal btn-queren').text('编辑').addClass('btn-success').removeClass('btn-primary');
+                $('#myModal .btn-queren').text('编辑').addClass('btn-success').removeClass('btn-primary');
+
                 //把编辑的当前这一行的 文章类别名 和 文章类别别名 显示在模态框中
                 $('#recipient-name').val($(e.relatedTarget).parent().prev().prev().text());//文章类别名称
                 $('#message-text').val($(e.relatedTarget).parent().prev().text()); //文章类别 别名
@@ -144,7 +147,82 @@
                 $('#category_id').val($(e.relatedTarget).attr('data-id'));
             }
         })
-    })
+
+        //三: 给模态框中的 取消按钮设置一个点击事件
+        $('#myModal .btn-cancel').on('click', function () {
+            //reset() 方法可把表单中的元素重置为它们的默认值
+            $('#myModal form')[0].reset();
+        });
+
+        //四:给模态框中的 新增/编辑 按钮设置点击事件
+        $('#myModal .btn-queren').on('click', function () {
+            //判断是否拥有这个类:btn-primary , 如果有就是新增 , 否则就是编辑
+            if ($(this).hasClass('btn-primary')) {
+                //1.获取用户输入的分类类别名称 , 和分类类别别名
+                var cateName = $('#recipient-name').val().trim(); //分类类别名称
+                var cateSlug = $('#message-text').val().trim(); //分类类别 别名
+                //2.发送ajax请求 , 完成新增
+                $.ajax({
+                    type: 'post',
+                    url: BigNew.category_add,
+                    data: {
+                        name: cateName,
+                        slug: cateSlug
+                    },
+                    success: function (backData) {
+                        if (backData == 201) {
+                            $('#myModal').modal('hide');
+                            //window.location.reload();//刷新当前页面
+                            getData();//重新发送ajax请求 , 获取数据重新渲染
+                        }
+                    }
+                });
+            } else {
+                //获取当前要修改的这一行分类的ID , 以及用户修改后的分类名和分类类别名
+                var cateId = $('#category_id').val().trim(); //分类id
+                var cateName = $('#recipient-name').val().trim(); //分类类别名称
+                var cateSlug = $('#message-text').val().trim(); //分类类别 别名
+                //发送ajax请求 , 完成编辑
+                $.ajax({
+                    type: 'post',
+                    url: BigNew.category_edit,
+                    data: {
+                        id: cateId,
+                        name: cateName,
+                        slug: cateSlug
+                    },
+                    success: function (backData) {
+                        if (backData.code == 200) {
+                            $('#myModal').modal('hide');
+                            //window.location.reload();//刷新当前页面
+                            getData();//重新发送ajax请求 , 获取数据重新渲染
+                        }
+                    }
+                });
+            }
+        });
+
+        //五:删除分类
+        $('tbody').on('click', '.btn-delete', function () {
+            if (confirm('你确定要删除吗?')) {
+                //获取要删除的分类ID
+                var id = $(this).attr('data-id');
+                //发送ajax请求完成删除
+                $.ajax({
+                    type: 'post',
+                    url: BigNew.category_delete,
+                    data: {
+                        id: id
+                    },
+                    success: function (backData) {
+                        if (backData.code == 204) {
+                            getData();
+                        }
+                    }
+                });
+            }
+        });
+    }); 
 </script>
 
 </html>
